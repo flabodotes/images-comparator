@@ -8,8 +8,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class Util {
-
-	private static final String EMPTY = "";
+	
 
 	/**
 	 * Normalize names
@@ -38,34 +37,27 @@ public class Util {
 		return out.getCanonicalPath();
 	}
 
-	public static double getVariation(File original, File current, File output) {
+	public static int getVariation(File original, File current, File output) {
+		int variation = 0;
 		try {
-			// int r = 255;// red component 0...255
-			// int g = 0;// green component 0...255
-			// int b = 0;// blue component 0...255
-			// int a = 127;// alpha (transparency) component 0...255
-			// final int CHANGE_COLOR = (a << 24) | (r << 16) | (g << 8) | b;
-			// final int CHANGE_COLOR = (r << 16) | (g << 8) | b;
-
 			BufferedImage bufferCurrent = ImageIO.read(current);
 			BufferedImage bufferOriginal = ImageIO.read(original);
 
-			System.out.println("Tiene alpha:" + bufferOriginal.getColorModel().hasAlpha());
+			//System.out.println("Has alpha channel:" + bufferOriginal.getColorModel().hasAlpha());
 
-			int[][] originalPixels = convertTo2DUsingGetRGB(bufferOriginal);
-			int[][] currentPixels = convertTo2DUsingGetRGB(bufferCurrent);
-
-			double variation = 0;
+			int[][] originalPixels = convertTo2D(bufferOriginal);
+			int[][] currentPixels = convertTo2D(bufferCurrent);
+			
 			for (int row = 0; row < bufferOriginal.getHeight(); row++) {
 				for (int col = 0; col < bufferOriginal.getWidth(); col++) {
 					if (originalPixels[row][col] != currentPixels[row][col]) {
 						variation = variation + 1;
 
-						Color c = new Color(bufferCurrent.getRGB(col, row));
-						int red = c.getRed();
-						int green = c.getGreen();
-						int blue = c.getBlue();
-						int alpha = c.getAlpha();
+						Color currentColor = new Color(bufferCurrent.getRGB(col, row));
+						int red = currentColor.getRed();
+						int green = currentColor.getGreen();
+						int blue = currentColor.getBlue();
+						//int alpha = c.getAlpha();
 
 						final int RED_COLOR = (0 << 24) | (255 << 16) | (green << 8) | blue;
 						final int BLACK_COLOR = (0 << 24) | (0 << 16) | (green << 8) | blue;
@@ -79,23 +71,20 @@ public class Util {
 				}
 			}
 
-			if (variation > 0) {
-				boolean res = ImageIO.write(bufferCurrent, "PNG", output);
-				System.out.println("Changes saved:" + res);
-			} else {
-				System.out.println("There are no changes");
+			if (variation > 0 && output!=null) {
+				ImageIO.write(bufferCurrent, "PNG", output);				
 			}
 
 			bufferCurrent = null;// clean memory
 			bufferOriginal = null;// clean memory
-			return variation;
+			
 		} catch (IOException e) {
-			System.out.println(e);
+			System.out.println(Controller.PROCESS_ERROR_CODE);
 		}
-		return Double.MAX_VALUE;
+		return variation;
 	}
 
-	private static int[][] convertTo2DUsingGetRGB(BufferedImage image) {
+	private static int[][] convertTo2D(BufferedImage image) {
 		int width = image.getWidth();
 		int height = image.getHeight();
 		int[][] result = new int[height][width];
